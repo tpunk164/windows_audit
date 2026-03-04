@@ -217,8 +217,9 @@ function PendingReboot {
 
 function GroupMembers {
     param([string]$Group)
-    if (-not (Cmd 'Get-LocalGroupMember')) { return @() }
-    @(Safe { Get-LocalGroupMember -Group $Group -ErrorAction Stop } @())
+    if (-not (Cmd 'Get-LocalGroupMember')) { return ,@() }
+    $members = @(Safe { Get-LocalGroupMember -Group $Group -ErrorAction Stop } @())
+    return ,$members
 }
 
 function RunEntryCount {
@@ -469,7 +470,7 @@ $hiddenTasks = @($tasks | Where-Object { $_.Settings.Hidden -eq $true })
 $currentUser = $env:USERNAME
 $currentLocalUser = if ($hasLocalUser) { $localUsers | Where-Object { $_.Name -eq $currentUser } | Select-Object -First 1 } else { $null }
 $currentUserIsAdmin = $false
-try { $currentUserIsAdmin = (whoami /groups 2>$null | Select-String 'S-1-5-32-544').Count -gt 0 } catch { $currentUserIsAdmin = $false }
+try { $currentUserIsAdmin = @((whoami /groups 2>$null | Select-String 'S-1-5-32-544')).Count -gt 0 } catch { $currentUserIsAdmin = $false }
 
 $enabledUsers = @($localUsers | Where-Object { (Prop $_ 'Enabled') -eq $true })
 $noPwdReqUsers = @($localUsers | Where-Object { (Prop $_ 'PasswordRequired') -eq $false })
